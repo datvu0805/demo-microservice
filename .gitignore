@@ -1,0 +1,10 @@
+﻿.idea/
+*.iml
+**/.gradle/
+**/build/
+**/target/
+.env
+.env.*
+!.env.example
+*.log
+*.zip

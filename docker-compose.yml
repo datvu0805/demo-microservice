@@ -1,0 +1,189 @@
+services:
+  service-discovery:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.spring-service
+      args:
+        SERVICE_DIR: service-discovery
+    container_name: kafka-demo-service-discovery
+    ports:
+      - "8761:8761"
+
+  config-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.spring-service
+      args:
+        SERVICE_DIR: config-service
+    container_name: kafka-demo-config-service
+    ports:
+      - "8888:8888"
+
+  inventory-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.spring-service
+      args:
+        SERVICE_DIR: inventory2-service
+    container_name: kafka-demo-inventory-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      service-discovery:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/order_db
+      SPRING_DATASOURCE_USERNAME: order_user
+      SPRING_DATASOURCE_PASSWORD: order_password
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
+      EUREKA_INSTANCE_HOSTNAME: inventory-service
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+    ports:
+      - "8083:8083"
+
+  order-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.spring-service
+      args:
+        SERVICE_DIR: order-service
+    container_name: kafka-demo-order-service
+    depends_on:
+      mysql:
+        condition: service_healthy
+      service-discovery:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/order_db
+      SPRING_DATASOURCE_USERNAME: order_user
+      SPRING_DATASOURCE_PASSWORD: order_password
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
+      EUREKA_INSTANCE_HOSTNAME: order-service
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+    ports:
+      - "8084:8084"
+
+  product-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.spring-service
+      args:
+        SERVICE_DIR: product-service
+    container_name: kafka-demo-product-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      service-discovery:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/order_db
+      SPRING_DATASOURCE_USERNAME: order_user
+      SPRING_DATASOURCE_PASSWORD: order_password
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
+      EUREKA_INSTANCE_HOSTNAME: product-service
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+    ports:
+      - "8085:8085"
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.spring-service
+      args:
+        SERVICE_DIR: api-gateway
+    container_name: kafka-demo-api-gateway
+    depends_on:
+      order-service:
+        condition: service_started
+      inventory-service:
+        condition: service_started
+      product-service:
+        condition: service_started
+      service-discovery:
+        condition: service_started
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
+      EUREKA_INSTANCE_HOSTNAME: api-gateway
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+    ports:
+      - "8086:8086"
+
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: root_demo
+      MYSQL_DATABASE: order_db
+      MYSQL_USER: order_user
+      MYSQL_PASSWORD: order_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: order_db
+      POSTGRES_USER: order_user
+      POSTGRES_PASSWORD: order_password
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U order_user -d order_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  kafka:
+    image: redpandadata/redpanda:v24.3.9
+    command:
+      - redpanda
+      - start
+      - --mode
+      - dev-container
+      - --smp
+      - "1"
+      - --memory
+      - 1G
+      - --overprovisioned
+      - --kafka-addr
+      - internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr
+      - internal://kafka:9092,external://localhost:19092
+      - --rpc-addr
+      - kafka:33145
+      - --advertise-rpc-addr
+      - kafka:33145
+    ports:
+      - "19092:19092"
+    volumes:
+      - kafka_data:/var/lib/redpanda/data
+    healthcheck:
+      test: ["CMD", "rpk", "cluster", "health"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: demo
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      DYNAMIC_CONFIG_ENABLED: "true"
+
+volumes:
+  mysql_data:
+  postgres_data:
+  kafka_data:
