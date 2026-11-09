@@ -15,6 +15,12 @@ spring:
         format_sql: true
 server:
   port: 8084
+
+inventory:
+  grpc:
+    host: localhost
+    port: 9090
+
 eureka:
   client:
     service-url:

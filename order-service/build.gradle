@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '4.1.1'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'com.google.protobuf' version '0.9.5'
 }
 
 group = 'dat.com'
@@ -24,5 +25,29 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    implementation 'io.grpc:grpc-protobuf:1.75.0'
+    implementation 'io.grpc:grpc-stub:1.75.0'
+    runtimeOnly 'io.grpc:grpc-netty-shaded:1.75.0'
+
+    compileOnly 'org.apache.tomcat:annotations-api:6.0.53'
+}
+protobuf {
+    protoc {
+        artifact = 'com.google.protobuf:protoc:4.32.1'
+    }
+
+    plugins {
+        grpc {
+            artifact = 'io.grpc:protoc-gen-grpc-java:1.75.0'
+        }
+    }
+
+    generateProtoTasks {
+        all().configureEach { task ->
+            task.plugins {
+                grpc {}
+            }
+        }
+    }
 }
 tasks.named('test') { useJUnitPlatform() }
