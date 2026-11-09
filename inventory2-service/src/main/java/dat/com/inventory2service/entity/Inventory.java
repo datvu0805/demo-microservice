@@ -18,5 +18,9 @@ public class Inventory {
 
     private String productName;
 
+    @Column(unique = true)
+    private Long productId;
+
+
     private Integer quantity;
 }
