@@ -1,4 +1,4 @@
-package dat.com.orderservice.entity;
+package dat.com.orderservice.domain.model;
 
 public enum OrderStatus {
     PENDING,

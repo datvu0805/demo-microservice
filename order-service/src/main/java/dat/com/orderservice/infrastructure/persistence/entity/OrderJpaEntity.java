@@ -1,8 +1,9 @@
-package dat.com.orderservice.entity;
-
+package dat.com.orderservice.infrastructure.persistence.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 
@@ -11,9 +12,7 @@ import java.math.BigDecimal;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class Order {
+public class OrderJpaEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,7 +30,6 @@ public class Order {
     @Column(nullable = false)
     private Integer quantity;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private OrderStatus status;
+    @Column(nullable = false, length = 30)
+    private String status;
 }

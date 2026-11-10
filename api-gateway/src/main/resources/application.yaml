@@ -4,54 +4,19 @@ server:
 spring:
   application:
     name: api-gateway
-
   cloud:
     gateway:
-      routes:
+      routes: []
 
-        # =========================
-        # ORDER SERVICE
-        # =========================
-        - id: order-service
-          uri: lb://order-service
-          predicates:
-            - Path=/api/orders,/api/orders/**
-          filters:
-            - StripPrefix=1
-
-        # =========================
-        # INVENTORY SERVICE
-        # =========================
-        - id: inventory-service
-          uri: lb://inventory-service
-          predicates:
-            - Path=/api/inventory,/api/inventory/**
-          filters:
-            - StripPrefix=1
-
-        - id: product-service
-          uri: lb://product-service
-          predicates:
-            - Path=/api/products,/api/products/**
-          filters:
-            - StripPrefix=1
-
-# =========================
-# EUREKA
-# =========================
 eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka/
 
-# =========================
-# ACTUATOR
-# =========================
 management:
   endpoint:
     gateway:
       access: read-only
-
   endpoints:
     web:
       exposure:
@@ -60,11 +25,7 @@ management:
           - info
           - gateway
 
-# =========================
-# LOGGING
-# =========================
 logging:
   level:
     org.springframework.cloud.gateway: DEBUG
     org.springframework.cloud.loadbalancer: DEBUG
-
