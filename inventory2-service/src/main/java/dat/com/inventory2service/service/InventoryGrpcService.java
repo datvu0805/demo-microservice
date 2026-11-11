@@ -45,7 +45,7 @@ public class InventoryGrpcService extends InventoryServiceGrpc.InventoryServiceI
         }
 
         //4.Kiểm tra số lượng hàng
-        int currentQuantity = inventory.getQuantity();
+        int currentQuantity = inventory.getQuantity()- inventory.getReservedQuantity();
 
         boolean available = currentQuantity>=quantity;
 

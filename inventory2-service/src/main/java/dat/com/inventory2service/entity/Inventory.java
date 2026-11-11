@@ -21,6 +21,8 @@ public class Inventory {
     @Column(unique = true)
     private Long productId;
 
+    @Column(name = "reserved_quantity", nullable = false)
+    private Integer reservedQuantity = 0;
 
     private Integer quantity;
 }
