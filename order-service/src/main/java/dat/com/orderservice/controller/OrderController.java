@@ -29,7 +29,7 @@ public class OrderController {
         return new
                 Order(order.getId(),order.getProductId(),
                 order.getProductName(),order.getPrice(),
-                order.getQuantity(),order.getStatus());
+                order.getQuantity(),order.getStatus(),order.getVersion());
     }
 
     @PostMapping("/{id}/cancel")
@@ -38,7 +38,7 @@ public class OrderController {
         return new
                 Order(order.getId(),order.getProductId(),
                 order.getProductName(),order.getPrice(),
-                order.getQuantity(),order.getStatus());
+                order.getQuantity(),order.getStatus(), order.getVersion());
     }
 
 }

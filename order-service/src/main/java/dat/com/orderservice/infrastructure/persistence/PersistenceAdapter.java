@@ -6,9 +6,12 @@ import dat.com.orderservice.infrastructure.persistence.entity.OrderJpaEntity;
 import dat.com.orderservice.infrastructure.persistence.mapper.OrderPersistenceMapper;
 import dat.com.orderservice.infrastructure.persistence.repository.OrderJpaRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+
+import java.util.Objects;
 import java.util.Optional;
 @Repository
 @RequiredArgsConstructor
@@ -19,9 +22,26 @@ public class PersistenceAdapter implements OrderRepository {
     @Transactional
     @Override
     public Order save(Order order) {
-        OrderJpaEntity entity=mapper.toEntity(order);
-        OrderJpaEntity savedEntity = orderJpaRepository.save(entity);
-        return mapper.toDomain(savedEntity);
+
+        if(order.getId()==null){
+            OrderJpaEntity newEntity = mapper.toEntity(order);
+            OrderJpaEntity saved =orderJpaRepository.saveAndFlush(newEntity);
+            return mapper.toDomain(saved);
+        }
+
+        OrderJpaEntity entity = orderJpaRepository.findById(order.getId())
+                .orElseThrow(()
+                        -> new IllegalArgumentException("Khng có id"));
+
+        if(!Objects.equals(entity.getVersion(),order.getVersion())){
+            throw new ObjectOptimisticLockingFailureException(OrderJpaEntity.class,order.getId());
+        }
+
+        entity.setStatus(order.getStatus().name());
+
+        orderJpaRepository.flush();
+
+        return mapper.toDomain(entity);
     }
 
     @Override

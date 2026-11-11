@@ -1,5 +1,6 @@
 package dat.com.orderservice.infrastructure.persistence.entity;
 
+import com.thoughtworks.xstream.mapper.Mapper;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -32,4 +33,8 @@ public class OrderJpaEntity {
 
     @Column(nullable = false, length = 30)
     private String status;
+
+    @Version
+    @Column(nullable = false)
+    private Long version;
 }

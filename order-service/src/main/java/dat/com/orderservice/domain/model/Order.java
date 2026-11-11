@@ -25,13 +25,16 @@ public class Order {
 
     private OrderStatus status;
 
-    public Order(Long id, Long productId, String productName, BigDecimal price, Integer quantity, OrderStatus status) {
+    private Long version;
+
+    public Order(Long id, Long productId, String productName, BigDecimal price, Integer quantity, OrderStatus status,Long version) {
         this.id = id;
         this.productId = productId;
         this.productName = productName;
         this.price = price;
         this.quantity = quantity;
         this.status = status;
+        this.version= version;
     }
     // factory method tạo đơn hàng
     public static Order create(Long productId,String productName,
@@ -47,13 +50,13 @@ public class Order {
         }
 
         return new Order(
-                null,productId,productName,price,quantity,OrderStatus.PENDING
+                null,productId,productName,price,quantity,OrderStatus.PENDING,null
         );
     }
 
     //Khôi phục order đc lưu  DB
     public static Order rehydrate(
-            Long id,Long productId,String productName,BigDecimal price,int quantity,OrderStatus status
+            Long id,Long productId,String productName,BigDecimal price,int quantity,OrderStatus status,Long version
     ){
         if(id==null || id <=0){
             throw new IllegalArgumentException("id không hợp lệ");
@@ -62,7 +65,7 @@ public class Order {
         Objects.requireNonNull(status,"status là bắt buộc");
         Order order = create(productId,productName,price,quantity);
 
-        return new Order(id, order.productId,order.productName,order.price,order.quantity,status);
+        return new Order(id, order.productId,order.productName,order.price,order.quantity,status,version);
     }
 
     //xác nhận đơn hàng(Business Behavior)
@@ -101,6 +104,10 @@ public class Order {
 
     public Integer getQuantity() {
         return quantity;
+    }
+
+    public Long getVersion() {
+        return version;
     }
 
     public OrderStatus getStatus() {

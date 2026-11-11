@@ -32,7 +32,8 @@ public class OrderPersistenceMapper {
                 entity.getProductName(),
                 entity.getPrice(),
                 entity.getQuantity(),
-                OrderStatus.valueOf(entity.getStatus())
+                OrderStatus.valueOf(entity.getStatus()),
+                entity.getVersion()
         );
 
     }

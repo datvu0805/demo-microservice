@@ -28,7 +28,7 @@ dependencies {
     implementation 'io.grpc:grpc-protobuf:1.75.0'
     implementation 'io.grpc:grpc-stub:1.75.0'
     runtimeOnly 'io.grpc:grpc-netty-shaded:1.75.0'
-
+    implementation 'org.springframework.boot:spring-boot-starter-kafka'
     compileOnly 'org.apache.tomcat:annotations-api:6.0.53'
 }
 protobuf {
