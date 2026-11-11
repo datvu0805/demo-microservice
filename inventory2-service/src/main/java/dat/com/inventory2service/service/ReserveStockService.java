@@ -15,6 +15,7 @@ public class ReserveStockService {
     private final InventoryRepository inventoryRepository;
     private final InventoryReservationRepository inventoryReservationRepository;
     private final JdbcTemplate jdbcTemplate;
+    private final OutboxPersistenceService outboxPersistenceService;
 
     @Transactional
     public ReservationStatus reserve(Long orderId,Long productId,int quantity){
@@ -51,6 +52,7 @@ public class ReserveStockService {
 
         //4.Atomic condition Update(tránh overselling)
         int upodateRows = inventoryRepository.reserveStock(productId, quantity);
+
         ReservationStatus status = upodateRows==1?ReservationStatus.RESERVED:ReservationStatus.REJECTED;
 
         //5.Luu kết quả của orderId
@@ -59,6 +61,12 @@ public class ReserveStockService {
                 SET status = ?
                 WHERE order_id =?
                 """,status.name(),orderId);
+
+        //6.Xác định trạng thái topic
+        String topic = status == ReservationStatus.RESERVED ? "stock.reserved":"stock.reject";
+
+        //7.Lưu outbox
+        outboxPersistenceService.saveStockResult(orderId,productId,quantity,topic);
 
         return status;
     }

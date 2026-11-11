@@ -13,8 +13,8 @@ spring:
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
 
       properties:
-        spring.json.value.default.type: dat.com.inventory2service.infrastructure.messaging.event.OrderCreatedEvent
-        spring.json.trusted.packages: dat.com.inventory2service.infrastructure.messaging.event
+        spring.json.value.default.type: dat.com.inventory2service.dto.OrderCreatedEvent
+        spring.json.trusted.packages: dat.com.inventory2service.dto
         spring.json.use.type.headers: false
 
     listener:

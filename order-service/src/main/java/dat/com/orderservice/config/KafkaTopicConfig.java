@@ -8,7 +8,7 @@ import org.springframework.kafka.config.TopicBuilder;
 @Configuration
 public class KafkaTopicConfig {
 
-    public static final String ORDER_CREATED ="order-created";
+    public static final String ORDER_CREATED ="order.created";
 
     @Bean
     public NewTopic orderCreateTopic(){

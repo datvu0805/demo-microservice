@@ -35,7 +35,7 @@ public class InventoryGrpcClient {
                     productId, quantity);
 
             return stub
-                    .withDeadlineAfter(10, TimeUnit.SECONDS)
+                    .withDeadlineAfter(100, TimeUnit.SECONDS)
                     .checkStock(request);
 
         } catch (StatusRuntimeException ex) {
