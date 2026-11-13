@@ -41,7 +41,7 @@ public class ReserveStockService {
         if(inserted==0){
             InventoryReservation existing = inventoryReservationRepository.findByOrderId(orderId).orElseThrow(()
             -> new IllegalArgumentException("reserve khong tồn tại "));
-            //payload k trùng nhưng id trùng nhau
+            //payload  trùng , id trùng nhau
             if(!existing.getProductId().equals(productId)||existing.getQuantity() != quantity){
                 throw new IllegalArgumentException("payload bị trùng");
             }

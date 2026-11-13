@@ -9,6 +9,18 @@ spring:
       properties:
         enable.idempotence: true
         acks: all
+
+    consumer:
+      group-id: order-saga-group
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+      listener:
+        ack-mode: record
+
   application:
     name: order-service
   datasource:
