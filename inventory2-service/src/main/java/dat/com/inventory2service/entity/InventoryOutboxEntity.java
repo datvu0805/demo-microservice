@@ -37,7 +37,7 @@ public class InventoryOutboxEntity {
     private UUID eventId;
 
     @Column(name = "order_id", nullable = false)
-    private Long orderId;
+    private UUID orderId;
 
     @Column(nullable = false, length = 100)
     private String topic;
@@ -64,13 +64,13 @@ public class InventoryOutboxEntity {
 
     public static InventoryOutboxEntity create(
             UUID eventId,
-            Long orderId,
+            UUID orderId,
             String topic,
             String payload
     ) {
         InventoryOutboxEntity entity =
                 new InventoryOutboxEntity();
-        entity.eventId = UUID.randomUUID();
+        entity.eventId = eventId;
         entity.orderId = orderId;
         entity.topic = topic;
         entity.payload = payload;

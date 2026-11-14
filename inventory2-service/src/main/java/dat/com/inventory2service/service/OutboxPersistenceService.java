@@ -19,12 +19,12 @@ public class OutboxPersistenceService {
     private final ObjectMapper objectMapper;
 
     @Transactional
-    public void saveStockResult(Long orderId,Long productId,int quantity,String topic){
+    public void saveStockResult(UUID orderId,Long productId,int quantity,String topic){
         try {
             UUID eventId = UUID.randomUUID();
             Map<String, Object> event = Map.of(
                     "eventId",eventId.toString(),
-                    "orderId",orderId,
+                    "orderId",orderId.toString(),
                     "productId",productId,
                     "quantity",quantity
             );

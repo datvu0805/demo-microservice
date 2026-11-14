@@ -9,6 +9,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class ReserveStockService {
@@ -18,10 +20,10 @@ public class ReserveStockService {
     private final OutboxPersistenceService outboxPersistenceService;
 
     @Transactional
-    public ReservationStatus reserve(Long orderId,Long productId,int quantity){
+    public ReservationStatus reserve(UUID orderId,Long productId,int quantity){
 
         //1. validate request
-        if(orderId == null || orderId<=0||
+        if(orderId == null ||
                 productId==null||productId<=0
                 ||quantity<=0){
             throw new IllegalArgumentException("Request không hợp lệ , do id hoặc quantity");

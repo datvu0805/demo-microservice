@@ -4,8 +4,8 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 public record OrderCreatedevent(
-        UUID eventID,
-        Long orderId,
+        UUID eventId,
+        UUID orderId,
         Long productId,
         int quantity,
         BigDecimal price

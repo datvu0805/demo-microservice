@@ -6,11 +6,12 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.util.Objects;
+import java.util.UUID;
 
 
 public class Order {
 
-    private Long id;
+    private UUID id;
 
 
     private Long productId;
@@ -27,7 +28,7 @@ public class Order {
 
     private Long version;
 
-    public Order(Long id, Long productId, String productName, BigDecimal price, Integer quantity, OrderStatus status,Long version) {
+    public Order(UUID id, Long productId, String productName, BigDecimal price, Integer quantity, OrderStatus status,Long version) {
         this.id = id;
         this.productId = productId;
         this.productName = productName;
@@ -45,7 +46,10 @@ public class Order {
         if(productName == null || productName.isBlank()){
             throw new IllegalArgumentException("Tên sản phân k hợp lệ");
         }
-        if(quantity<0){
+        if(price == null || price.signum() < 0){
+            throw new IllegalArgumentException("Giá sản phẩm không hợp lệ");
+        }
+        if(quantity == null || quantity <= 0){
             throw new IllegalArgumentException("Số lượng k hợp le, phải >0");
         }
 
@@ -56,9 +60,9 @@ public class Order {
 
     //Khôi phục order đc lưu  DB
     public static Order rehydrate(
-            Long id,Long productId,String productName,BigDecimal price,int quantity,OrderStatus status,Long version
+            UUID id,Long productId,String productName,BigDecimal price,int quantity,OrderStatus status,Long version
     ){
-        if(id==null || id <=0){
+        if(id==null){
             throw new IllegalArgumentException("id không hợp lệ");
         }
 
@@ -86,7 +90,7 @@ public class Order {
         this.status=OrderStatus.CANCELLED;
     }
 
-    public Long getId() {
+    public UUID getId() {
         return id;
     }
 

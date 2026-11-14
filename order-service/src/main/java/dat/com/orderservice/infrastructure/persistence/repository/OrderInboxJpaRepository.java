@@ -15,11 +15,16 @@ public interface OrderInboxJpaRepository extends JpaRepository<OrderInboxEntity,
     @Query(value = """
     INSERT IGNORE INTO order_event_inbox
         (event_id, order_id, topic, processed_at)
-    VALUES (:eventId, :orderId, :topic, CURRENT_TIMESTAMP)
+    VALUES (
+        UUID_TO_BIN(:eventId),
+        UUID_TO_BIN(:orderId),
+        :topic,
+        CURRENT_TIMESTAMP
+    )
     """, nativeQuery = true)
     int claimEvent(
             @Param("eventId") String eventId,
-            @Param("orderId") Long orderId,
+            @Param("orderId") String orderId,
             @Param("topic") String topic
     );
 }

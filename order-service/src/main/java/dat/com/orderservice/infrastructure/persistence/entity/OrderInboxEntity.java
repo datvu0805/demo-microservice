@@ -3,6 +3,8 @@ package dat.com.orderservice.infrastructure.persistence.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -14,11 +16,18 @@ import java.util.UUID;
 public class OrderInboxEntity {
 
     @Id
-    @Column(name = "event_id", nullable = false, updatable = false)
+    @JdbcTypeCode(SqlTypes.BINARY)
+    @Column(
+            name = "event_id",
+            nullable = false,
+            updatable = false,
+            columnDefinition = "BINARY(16)"
+    )
     private UUID eventId;
 
-    @Column(name = "order_id", nullable = false)
-    private Long orderId;
+    @JdbcTypeCode(SqlTypes.BINARY)
+    @Column(name = "order_id", nullable = false, columnDefinition = "BINARY(16)")
+    private UUID orderId;
 
     @Column(nullable = false, length = 100)
     private String topic;
@@ -28,7 +37,7 @@ public class OrderInboxEntity {
 
     public static OrderInboxEntity create(
             UUID eventId,
-            Long orderId,
+            UUID orderId,
             String topic
     ) {
         OrderInboxEntity inbox = new OrderInboxEntity();

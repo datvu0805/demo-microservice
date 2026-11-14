@@ -4,7 +4,7 @@ spring:
 
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
 
       properties:
         enable.idempotence: true
@@ -18,8 +18,8 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
 
-      listener:
-        ack-mode: record
+    listener:
+      ack-mode: record
 
   application:
     name: order-service

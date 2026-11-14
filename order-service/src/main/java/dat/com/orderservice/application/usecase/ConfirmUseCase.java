@@ -2,9 +2,13 @@ package dat.com.orderservice.application.usecase;
 
 import dat.com.orderservice.domain.model.Order;
 import dat.com.orderservice.domain.repository.OrderRepository;
-import dat.com.orderservice.infrastructure.persistence.repository.OrderJpaRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.UUID;
 
 
 @Service
@@ -13,8 +17,10 @@ public class ConfirmUseCase {
 
     private final OrderRepository orderRepository;
 
-    public Order execute(Long orderId){
-        Order order = orderRepository.findById(orderId).orElseThrow(()->new IllegalArgumentException("Đơn hàng k có"));
+    @Transactional
+    public Order execute(UUID orderId){
+        Order order = orderRepository.findById(orderId).orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn hàng: " + orderId));
 
         order.confirm();
 

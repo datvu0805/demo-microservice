@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.UUID;
+
 @Entity
 @Table(
         name = "inventory_reservations",
@@ -23,7 +25,7 @@ public class InventoryReservation {
     private Long id;
 
     @Column(name = "order_id", nullable = false)
-    private Long orderId;
+    private UUID orderId;
 
     @Column(name = "product_id", nullable = false)
     private Long productId;

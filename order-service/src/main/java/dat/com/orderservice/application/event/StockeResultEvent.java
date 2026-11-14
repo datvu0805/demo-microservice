@@ -4,7 +4,7 @@ import java.util.UUID;
 
 public record StockeResultEvent(
         UUID eventId,
-        Long orderId,
+        UUID orderId,
         Long productId,
         int quantity
 ) {

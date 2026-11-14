@@ -59,7 +59,7 @@ public class OutboxClaimRepository {
             """,
                 (rs, rowNum) -> new OutboxMessage(
                         rs.getLong("id"),
-                        rs.getLong("order_id"),
+                        rs.getObject("order_id", UUID.class),
                         rs.getString("topic"),
                         rs.getString("payload"),
                         rs.getObject("claim_token", UUID.class)

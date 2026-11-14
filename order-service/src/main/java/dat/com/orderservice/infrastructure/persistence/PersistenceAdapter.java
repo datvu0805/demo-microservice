@@ -13,6 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
+
 @Repository
 @RequiredArgsConstructor
 public class PersistenceAdapter implements OrderRepository {
@@ -23,7 +25,9 @@ public class PersistenceAdapter implements OrderRepository {
     @Override
     public Order save(Order order) {
 
-        if(order.getId()==null){
+        // New orders already have a UUID from the domain factory; version is null
+        // until the entity is first inserted.
+        if(order.getVersion()==null){
             OrderJpaEntity newEntity = mapper.toEntity(order);
             OrderJpaEntity saved =orderJpaRepository.saveAndFlush(newEntity);
             return mapper.toDomain(saved);
@@ -45,7 +49,7 @@ public class PersistenceAdapter implements OrderRepository {
     }
 
     @Override
-    public Optional<Order> findById(Long id) {
+    public Optional<Order> findById(UUID id) {
         return orderJpaRepository.findById(id).map(mapper::toDomain);
     }
 }

@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/order")
 @RequiredArgsConstructor
@@ -24,7 +26,7 @@ public class OrderController {
     }
 
     @PostMapping("/{id}/confirm")
-    public Order confrim(@PathVariable Long id){
+    public Order confrim(@PathVariable UUID id){
         Order order = confirm.execute(id);
         return new
                 Order(order.getId(),order.getProductId(),
@@ -33,7 +35,7 @@ public class OrderController {
     }
 
     @PostMapping("/{id}/cancel")
-    public Order cancel(@PathVariable Long id){
+    public Order cancel(@PathVariable UUID id){
         Order order = cancel.execute(id);
         return new
                 Order(order.getId(),order.getProductId(),

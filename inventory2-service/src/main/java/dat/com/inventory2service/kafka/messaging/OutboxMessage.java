@@ -4,7 +4,7 @@ import java.util.UUID;
 
 public record OutboxMessage(
         Long id,
-        Long orderId,
+        UUID orderId,
         String topic,
         String payload,
         UUID claimToken
