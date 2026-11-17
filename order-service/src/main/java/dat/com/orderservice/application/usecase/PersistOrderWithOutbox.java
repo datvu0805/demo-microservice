@@ -24,7 +24,6 @@ public class PersistOrderWithOutbox {
 
     @Transactional
     public Order execute(Order order){
-
         Order savedOrder = orderRepository.save(order);
 
         UUID eventId = UUID.randomUUID();
@@ -36,6 +35,7 @@ public class PersistOrderWithOutbox {
                 order.getQuantity(),
                 order.getPrice()
                 );
+
         //chuyển event thành json
         String payload = objectMapper.writeValueAsString(event);
 

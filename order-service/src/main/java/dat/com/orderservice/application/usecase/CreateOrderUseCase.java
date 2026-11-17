@@ -24,7 +24,7 @@ public class CreateOrderUseCase {
         //1. Lấy thông tin sản phẩn qua rest
        ProductResponse productResponse= productClient.getProduct(request.productId());
             if(productResponse == null || productResponse.id() == null){
-                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,"Product service trả về dữ liệu rỗng");
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND,"Product service trả về dữ liệu rỗng");
             }
 
         //2.ktra kho qua grpc
@@ -44,6 +44,7 @@ public class CreateOrderUseCase {
                 productResponse.price(),
                 request.quantity()
                 );
+
         return persistOrderWithOutbox.execute(order);
     }
 }

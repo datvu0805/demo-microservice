@@ -20,7 +20,7 @@ public class OrderOutboxWorker {
     private final OrderEventPublisher orderEventPublisher;
     private final ObjectMapper objectMapper;
 
-    @Scheduled(fixedDelay = 1000)
+    @Scheduled(fixedDelay = 10000000)
     public void publishPendingEvent(){
 
         List<OrderOutboxMessage> messages = orderOutboxClaimRepository.claimBatch();

@@ -4,6 +4,7 @@ import dat.com.orderservice.application.event.OrderCreatedevent;
 import dat.com.orderservice.config.KafkaTopicConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
@@ -14,7 +15,8 @@ import java.util.concurrent.CompletableFuture;
 @Slf4j
 public class OrderEventPublisher {
 
-    private final KafkaTemplate<String, OrderCreatedevent> kafkaTemplate;
+private final @Qualifier("orderKafkaTemplate")
+        KafkaTemplate<String, OrderCreatedevent> kafkaTemplate;
 
     public CompletableFuture<Void> publish(OrderCreatedevent event){
         String key = event.orderId().toString();

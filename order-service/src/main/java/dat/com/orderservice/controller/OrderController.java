@@ -5,11 +5,14 @@ import dat.com.orderservice.application.usecase.ConfirmUseCase;
 import dat.com.orderservice.application.usecase.CreateOrderUseCase;
 import dat.com.orderservice.dto.CreateOrderRequest;
 import dat.com.orderservice.domain.model.Order;
+import dat.com.orderservice.infrastructure.persistence.entity.OrderJpaEntity;
+import dat.com.orderservice.infrastructure.persistence.repository.OrderJpaRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -19,12 +22,18 @@ public class OrderController {
     private final CreateOrderUseCase create;
     private final CancelOrderUseCase cancel;
     private final ConfirmUseCase confirm;
+    private final OrderJpaRepository orderJpaRepository;
 
     @PostMapping
     public Order create(@Valid @RequestBody CreateOrderRequest request){
         return create.execute(request)  ;
     }
 
+
+    @GetMapping("/all")
+    public List<OrderJpaEntity> listOrder(){
+        return orderJpaRepository.findAll();
+    }
     @PostMapping("/{id}/confirm")
     public Order confrim(@PathVariable UUID id){
         Order order = confirm.execute(id);
