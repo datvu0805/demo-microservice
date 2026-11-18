@@ -1,4 +1,4 @@
-package dat.com.orderservice.infrastructure.messaging;
+package dat.com.orderservice.infrastructure.messaging.consumer;
 
 import dat.com.orderservice.application.event.StockeResultEvent;
 import dat.com.orderservice.application.usecase.ProcessStockResultUseCase;

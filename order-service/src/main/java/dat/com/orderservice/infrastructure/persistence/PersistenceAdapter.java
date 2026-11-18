@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 
+import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -41,7 +42,12 @@ public class PersistenceAdapter implements OrderRepository {
             throw new ObjectOptimisticLockingFailureException(OrderJpaEntity.class,order.getId());
         }
 
-        entity.setStatus(order.getStatus().name());
+        String newStatus = order.getStatus().name();
+
+        if(!Objects.equals(entity.getStatus(),newStatus)){
+            entity.setStatus(newStatus);
+            entity.setStatusChangedAt(Instant.now());
+        }
 
         orderJpaRepository.flush();
 

@@ -90,6 +90,63 @@ public class Order {
         this.status=OrderStatus.CANCELLED;
     }
 
+    //ghi nhận ý định hủy
+
+    public  boolean requestCancellation(){
+        if(status==OrderStatus.CANCELLING || status == OrderStatus.CANCELLED){
+            return false;
+        }
+
+        if(status != OrderStatus.PENDING && status != OrderStatus.CONFIRM){
+            throw new IllegalArgumentException("Không thể hủy đơn hàng đang ở trạng thái: "+status);
+        }
+
+        status=OrderStatus.CANCELLING;
+
+        return true;
+    }
+
+    //hoàn tất hủy sau khi inventory xác nhận
+    //reservation đc giải phóng hoặc k thể giữ hàng nx
+    public  boolean completeCancelaion(){
+        if(status == OrderStatus.CANCELLED){
+            return false;
+        }
+
+        if(status!=OrderStatus.CANCELLING){
+            throw new IllegalArgumentException("đơn hàng trạng thái cancelling mơới  đc phép hủy");
+        }
+
+        status=OrderStatus.CANCELLED;
+        return true;
+    }
+
+
+    public boolean rejectStock() {
+
+        // Đơn đã hủy: không thay đổi nữa.
+        if (status == OrderStatus.CANCELLED) {
+            return false;
+        }
+
+        // Đã yêu cầu giải phóng kho:
+        // tiếp tục chờ stock.released để hoàn tất hủy.
+        if (status == OrderStatus.CANCELLING) {
+            return false;
+        }
+
+        // Chỉ đơn đang chờ giữ kho mới được hủy vì hết hàng.
+        if (status != OrderStatus.PENDING) {
+            throw new IllegalStateException(
+                    "Không thể từ chối giữ kho cho Order ở trạng thái: "
+                            + status
+            );
+        }
+
+        status = OrderStatus.CANCELLED;
+        return true;
+    }
+
     public UUID getId() {
         return id;
     }

@@ -23,25 +23,30 @@ spring:
 
   application:
     name: order-service
+
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/order_db}
     username: ${SPRING_DATASOURCE_USERNAME:order_user}
     password: ${SPRING_DATASOURCE_PASSWORD:order_password}
     driver-class-name: com.mysql.cj.jdbc.Driver
+
   jpa:
     hibernate:
       ddl-auto: update
+
     show-sql: true
     properties:
       hibernate:
         format_sql: true
+        jbdc:
+          time_zone: UTC
 server:
   port: 8084
 
 inventory:
   grpc:
-    host: localhost
-    port: 9090
+    host: ${INVENTORY_GRPC_HOST:127.0.0.1}
+    port: ${INVENTORY_GRPC_PORT:9090}
 
 eureka:
   client:
@@ -50,3 +55,11 @@ eureka:
   instance:
     hostname: ${EUREKA_INSTANCE_HOSTNAME:localhost}
     prefer-ip-address: ${EUREKA_INSTANCE_PREFER_IP_ADDRESS:false}
+
+order:
+  outbox:
+    poll-delay-ms: 1000
+
+  saga:
+    stuck-after: PT2M
+    scan-delay-ms: 10000

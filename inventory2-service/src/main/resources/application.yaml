@@ -42,3 +42,6 @@ eureka:
   instance:
     hostname: ${EUREKA_INSTANCE_HOSTNAME:localhost}
     prefer-ip-address: ${EUREKA_INSTANCE_PREFER_IP_ADDRESS:false}
+inventory:
+  grpc:
+    port: ${INVENTORY_GRPC_PORT:9090}

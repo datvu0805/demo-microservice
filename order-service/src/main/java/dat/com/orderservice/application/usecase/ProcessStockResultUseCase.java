@@ -50,43 +50,33 @@ public class ProcessStockResultUseCase{
                 throw new IllegalArgumentException("Kết quả giữ kho không khớp với order: "+event.orderId());
             }
 
-            //5.Xác định trạng thái cần chuyển đến
-            OrderStatus targetStatus = STOCK_REVERSED.equals(topic)?OrderStatus.CONFIRM:OrderStatus.CANCELLED;
+            boolean changed;
 
-            //event khác ID nhưng cùng kết quả nghiệp vụ->k cập nhật lần nx
-            if(order.getStatus() == targetStatus){
-                log.info(
-                        "Order đã tồn tại target status: orderId={}, status={}",
-                        order.getId(),
-                        targetStatus
-                );
-                return;
-            }
+            if("stock.reserved".equals(topic)){
 
-            if(order.getStatus() != OrderStatus.PENDING){
-                throw new IllegalArgumentException("Kết quả giữ kho xung đột với trạng thái order:"
-                                                        +order.getId()
-                                                        +"current = "+order.getStatus()
-                                                        +"target="+targetStatus
-                );
-            }
+                if(order.getStatus() == OrderStatus.CANCELLING || order.getStatus() == OrderStatus.CANCELLED ){
+                    log.info(
+                            "Ignore late stock.reserved: orderId={}, status={}",
+                            order.getId(),
+                            order.getStatus()
+                    );
+                    return;
 
-            //6.dOMAIN QUYẾT ĐỊNH và thực hiện trạng thái
-            if(targetStatus == OrderStatus.CONFIRM){
+                }
+                if(order.getStatus()==OrderStatus.CONFIRM){
+                    return;
+                }
                 order.confirm();
+                changed=true;
+
             }else {
-                order.cancel();
+                changed=order.rejectStock();
             }
 
-            //7.adapter lưu trạng thái và kiểm tra optimistic locking
-            Order saved = orderRepository.save(order);
+            if(changed){
+                orderRepository.save(order);
+            }
 
-            log.info(
-                    "Processed stock result: eventId={}, orderId={}, status={}",
-                    event.eventId(),
-                    saved.getId(),
-                    saved.getStatus()
-            );
         }
 
 

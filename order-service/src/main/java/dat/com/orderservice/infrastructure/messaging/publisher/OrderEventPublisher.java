@@ -1,4 +1,4 @@
-package dat.com.orderservice.infrastructure.messaging;
+package dat.com.orderservice.infrastructure.messaging.publisher;
 
 import dat.com.orderservice.application.event.OrderCreatedevent;
 import dat.com.orderservice.config.KafkaTopicConfig;

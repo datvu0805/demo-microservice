@@ -1,6 +1,5 @@
 package dat.com.inventory2service.service;
 
-import com.thoughtworks.xstream.mapper.Mapper;
 import dat.com.inventory2service.entity.Inventory;
 import dat.com.inventory2service.grpc.CheckStockRequest;
 import dat.com.inventory2service.grpc.CheckStockResponse;
@@ -8,12 +7,13 @@ import dat.com.inventory2service.grpc.InventoryServiceGrpc;
 import dat.com.inventory2service.repository.InventoryRepository;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
-import jakarta.ws.rs.NotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class InventoryGrpcService extends InventoryServiceGrpc.InventoryServiceImplBase {
 
@@ -25,6 +25,12 @@ public class InventoryGrpcService extends InventoryServiceGrpc.InventoryServiceI
         //1. lấy dữ liệu từ request grpc
         long productId = request.getProductId();
         int quantity = request.getQuantity();
+
+        log.info(
+                "GRPC CHECKSTOCK RECEIVED: productId={}, quantity={}",
+                request.getProductId(),
+                request.getQuantity()
+        );
 
         //2.validate productId và số lượng xem có hợp lệ k
         if(productId <=0 || quantity<=0){
@@ -59,4 +65,5 @@ public class InventoryGrpcService extends InventoryServiceGrpc.InventoryServiceI
         responseStreamObserver.onNext(response);
         responseStreamObserver.onCompleted();
     }
+
 }

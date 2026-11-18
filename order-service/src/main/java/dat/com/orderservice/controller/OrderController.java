@@ -25,8 +25,8 @@ public class OrderController {
     private final OrderJpaRepository orderJpaRepository;
 
     @PostMapping
-    public Order create(@Valid @RequestBody CreateOrderRequest request){
-        return create.execute(request)  ;
+    public Order create(@Valid @RequestBody CreateOrderRequest request,@RequestHeader("Idempotency-Key")String idempotenceKey){
+        return create.execute(request,idempotenceKey)  ;
     }
 
 

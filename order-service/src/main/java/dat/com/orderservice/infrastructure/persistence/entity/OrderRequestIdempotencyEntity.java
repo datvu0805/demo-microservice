@@ -6,8 +6,11 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
+import java.util.UUID;
 
 @Entity
 @Table(name = "order_request_idempotency")
@@ -40,8 +43,12 @@ public class OrderRequestIdempotencyEntity {
     )
     private String claimToken;
 
-    @Column(name = "order_id")
-    private Long orderId;
+    @JdbcTypeCode(SqlTypes.BINARY)
+    @Column(
+            name = "order_id",
+            columnDefinition = "BINARY(16)"
+    )
+    private UUID orderId;
 
     @Column(
             name = "created_at",

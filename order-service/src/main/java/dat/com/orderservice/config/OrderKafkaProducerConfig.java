@@ -74,4 +74,24 @@ public class OrderKafkaProducerConfig {
     ) {
         return new KafkaTemplate<>(factory);
     }
+
+    @Bean
+    public DefaultKafkaProducerFactory<String, String>
+    outboxProducerFactory(
+            @Value("${spring.kafka.bootstrap-servers}") String servers
+    ) {
+        return new DefaultKafkaProducerFactory<>(
+                producerProperties(servers),
+                new StringSerializer(),
+                new StringSerializer()
+        );
+    }
+
+    @Bean("outboxKafkaTemplate")
+    public KafkaTemplate<String, String> outboxKafkaTemplate(
+            @Qualifier("outboxProducerFactory")
+            DefaultKafkaProducerFactory<String, String> factory
+    ) {
+        return new KafkaTemplate<>(factory);
+    }
 }

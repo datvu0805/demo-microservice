@@ -1,78 +1,97 @@
 package dat.com.orderservice.infrastructure.messaging;
 
-import dat.com.orderservice.application.event.OrderCreatedevent;
 import dat.com.orderservice.config.KafkaTopicConfig;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 @Component
-@RequiredArgsConstructor
 @Slf4j
 public class OrderOutboxWorker {
 
-    private final OrderOutboxClaimRepository orderOutboxClaimRepository;
-    private final OrderEventPublisher orderEventPublisher;
-    private final ObjectMapper objectMapper;
+    private static final Set<String> SUPPORTED_TOPICS = Set.of(
+            KafkaTopicConfig.ORDER_CREATED,
+            KafkaTopicConfig.INVENTORY_RELEASE_REQUESTED
+    );
 
-    @Scheduled(fixedDelay = 10000000)
-    public void publishPendingEvent(){
+    private final OrderOutboxClaimRepository claimRepository;
+    private final KafkaTemplate<String, String> kafkaTemplate;
 
-        List<OrderOutboxMessage> messages = orderOutboxClaimRepository.claimBatch();
+    public OrderOutboxWorker(
+            OrderOutboxClaimRepository claimRepository,
+            @Qualifier("outboxKafkaTemplate")
+            KafkaTemplate<String, String> kafkaTemplate
+    ) {
+        this.claimRepository = claimRepository;
+        this.kafkaTemplate = kafkaTemplate;
+    }
 
-        for (OrderOutboxMessage message:messages){
+    @Scheduled(
+            fixedDelayString = "${order.outbox.poll-delay-ms:1000}"
+    )
+    public void publishPendingEvent() {
+
+        List<OrderOutboxMessage> messages =
+                claimRepository.claimBatch();
+
+        for (OrderOutboxMessage message : messages) {
             try {
-                //publisher chỉ cho topic order.created
-                if (!KafkaTopicConfig.ORDER_CREATED.equals(message.topic())){
-                    throw new IllegalArgumentException("Topic không được hỗ trợ");
-                }
-                OrderCreatedevent event = objectMapper.readValue(message.payload(),OrderCreatedevent.class);
-
-                orderEventPublisher.publish(event).get(5, TimeUnit.SECONDS);
-
-                int updated = orderOutboxClaimRepository.markPublished(message);
-                if(updated==1){
-                    log.info(
-                            "Order outbox published: id={}, orderId={}",
-                            message.id(),
-                            message.orderId()
+                if (!SUPPORTED_TOPICS.contains(message.topic())) {
+                    throw new IllegalArgumentException(
+                            "Topic không được hỗ trợ: " + message.topic()
                     );
-                }else  {
+                }
+
+                // orderId trong OrderOutboxMessage hiện là String.
+                kafkaTemplate.send(
+                        message.topic(),
+                        message.orderId(),
+                        message.payload()
+                ).get(5, TimeUnit.SECONDS);
+
+                int updated = claimRepository.markPublished(message);
+
+                if (updated == 1) {
+                    log.info(
+                            "Outbox published: id={}, orderId={}, topic={}",
+                            message.id(),
+                            message.orderId(),
+                            message.topic()
+                    );
+                } else {
                     log.warn(
-                            "Order outbox claim lost: id={}",
+                            "Outbox claim lost: id={}",
                             message.id()
                     );
                 }
-            }  catch (InterruptedException ex) {
+
+            } catch (InterruptedException ex) {
                 Thread.currentThread().interrupt();
 
                 log.warn(
-                        "Order outbox worker interrupted: id={}",
+                        "Outbox worker interrupted: id={}",
                         message.id()
                 );
 
-                // Các bản ghi chưa hoàn tất sẽ được claim lại
-                // sau khi lease hết hạn.
+                // Lease hết hạn thì worker có thể claim lại.
                 return;
 
             } catch (Exception ex) {
                 log.error(
-                        "Order outbox processing failed: id={}",
+                        "Outbox publish failed: id={}, topic={}",
                         message.id(),
+                        message.topic(),
                         ex
                 );
 
-                // Trả về NEW, tăng retry_count,
-                // chờ 10 giây trước lần thử tiếp theo.
-                orderOutboxClaimRepository.markFailed(message);
+                claimRepository.markFailed(message);
             }
         }
-
-
-        }
     }
+}
