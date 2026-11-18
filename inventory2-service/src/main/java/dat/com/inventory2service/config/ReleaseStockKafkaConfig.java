@@ -41,6 +41,15 @@ public class ReleaseStockKafkaConfig {
                 .build();
     }
 
+    @Bean
+    public NewTopic orderCreatedDltTopic() {
+        return TopicBuilder
+                .name("order.created.DLT")
+                .partitions(3)
+                .replicas(1)
+                .build();
+    }
+
     @Bean("releaseStockKafkaListenerContainerFactory")
     public ConcurrentKafkaListenerContainerFactory<String, String>
     releaseStockKafkaListenerContainerFactory(

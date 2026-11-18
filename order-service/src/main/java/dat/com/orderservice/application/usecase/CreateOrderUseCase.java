@@ -1,11 +1,13 @@
 package dat.com.orderservice.application.usecase;
 
 import dat.com.orderservice.application.idempotency.OrderRequestHasher;
+import dat.com.orderservice.client.InventoryGrpcClient;
 import dat.com.orderservice.client.ProductClient;
 import dat.com.orderservice.domain.model.Order;
 import dat.com.orderservice.domain.repository.OrderRepository;
 import dat.com.orderservice.dto.CreateOrderRequest;
 import dat.com.orderservice.dto.ProductResponse;
+import dat.com.orderservice.grpc.CheckStockResponse;
 import dat.com.orderservice.infrastructure.persistence.repository.OrderRequestIdempotencyRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -24,6 +26,7 @@ public class CreateOrderUseCase {
             Pattern.compile("[a-z0-9_-]{1,64}");
 
     private final ProductClient productClient;
+    private final InventoryGrpcClient inventoryGrpcClient;
     private final OrderRepository orderRepository;
     private final PersistOrderWithOutbox persistOrderWithOutbox;
     private final OrderRequestHasher requestHasher;
@@ -53,7 +56,13 @@ public class CreateOrderUseCase {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Product service trả về dữ liệu rỗng");
         }
 
-        // Persist the order first. Inventory reservation runs asynchronously from order.created.
+        // Check stock qua grpc
+        CheckStockResponse stock = inventoryGrpcClient.checkStock(
+                request.productId(), request.quantity());
+        if (!stock.getAvailable()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Tồn kho không khả dụng");
+        }
+
         Order order = Order.create(
                 productResponse.id(),
                 productResponse.name(),
