@@ -15,9 +15,16 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class OrderOutboxWorker {
 
+//    private static final Set<String> SUPPORTED_TOPICS = Set.of(
+//            KafkaTopicConfig.ORDER_CREATED,
+//            KafkaTopicConfig.INVENTORY_RELEASE_REQUESTED
+//    );
+
     private static final Set<String> SUPPORTED_TOPICS = Set.of(
             KafkaTopicConfig.ORDER_CREATED,
-            KafkaTopicConfig.INVENTORY_RELEASE_REQUESTED
+            KafkaTopicConfig.INVENTORY_RESERVE_REQUESTED,
+            KafkaTopicConfig.INVENTORY_RELEASE_REQUESTED,
+            KafkaTopicConfig.INVENTORY_RELEASE_COMMAND
     );
 
     private final OrderOutboxClaimRepository claimRepository;

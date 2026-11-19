@@ -1,15 +1,20 @@
 package dat.com.orderservice.application.usecase;
 
+import dat.com.orderservice.application.command.ReserveStockCommand;
 import dat.com.orderservice.application.event.OrderCreatedevent;
 import dat.com.orderservice.application.idempotency.OrderRequestClaim;
 import dat.com.orderservice.config.KafkaTopicConfig;
 import dat.com.orderservice.domain.model.Order;
 import dat.com.orderservice.domain.repository.OrderRepository;
 import dat.com.orderservice.infrastructure.persistence.entity.OrderOutboxEntity;
+import dat.com.orderservice.infrastructure.persistence.entity.OrderSagaEntity;
 import dat.com.orderservice.infrastructure.persistence.repository.OrderOutboxJpaRepository;
 import dat.com.orderservice.infrastructure.persistence.repository.OrderRequestClaimRepository;
+import dat.com.orderservice.infrastructure.persistence.repository.OrderSagaJpaRepository;
 import lombok.RequiredArgsConstructor;
+
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
@@ -17,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import tools.jackson.databind.ObjectMapper;
 
+import java.time.Duration;
 import java.util.UUID;
 
 @Service
@@ -27,6 +33,11 @@ public class PersistOrderWithOutbox {
     private final OrderOutboxJpaRepository orderOutboxJpaRepository;
     private final ObjectMapper objectMapper;
     private final OrderRequestClaimRepository orderRequestClaimRepository;
+    private  final OrderSagaJpaRepository orderSagaJpaRepository;
+
+
+    @Value("${order.saga.stock-timeout:PT2M}")
+    private Duration stockTimeout;
 
     @Transactional
     public Order execute(Order order,String idempotencyKey,String payloadHash){
@@ -51,27 +62,61 @@ public class PersistOrderWithOutbox {
         }
 
 
-
+        //Lưu order Pending
         Order savedOrder = orderRepository.save(order);
 
-        UUID eventId = UUID.randomUUID();
+        if (savedOrder.getId() == null) {
+            throw new IllegalStateException(
+                    "Order đã lưu nhưng thiếu ID"
+            );
+        }
 
-        OrderCreatedevent event = new OrderCreatedevent(
-                eventId,
+//        UUID eventId = UUID.randomUUID();
+//
+//        OrderCreatedevent event = new OrderCreatedevent(
+//                eventId,
+//                savedOrder.getId(),
+//                order.getProductId(),
+//                order.getQuantity(),
+//                order.getPrice()
+//                );
+//
+//        //chuyển event thành json
+//        String payload = objectMapper.writeValueAsString(event);
+        //        OrderOutboxEntity outbox = OrderOutboxEntity.create(eventId, savedOrder.getId(), KafkaTopicConfig.ORDER_CREATED,payload);
+
+
+        //Khởi tạo saga chờ kết quả giữ hàng
+        OrderSagaEntity saga = OrderSagaEntity.startCreateOrder(savedOrder.getId(),stockTimeout);
+
+        orderSagaJpaRepository.save(saga);
+
+        //Tạo command từ thông tin saga đã khởi tạo
+        ReserveStockCommand command = new ReserveStockCommand(
+                saga.getCurrentCommandId(),
+                saga.getId(),
                 savedOrder.getId(),
-                order.getProductId(),
-                order.getQuantity(),
-                order.getPrice()
-                );
+                savedOrder.getProductId(),
+                savedOrder.getQuantity());
 
-        //chuyển event thành json
-        String payload = objectMapper.writeValueAsString(event);
+        String payload = objectMapper.writeValueAsString(command);
 
-        OrderOutboxEntity outbox = OrderOutboxEntity.create(eventId, savedOrder.getId(), KafkaTopicConfig.ORDER_CREATED,payload);
+        //lưu command vào out box
+
+        OrderOutboxEntity outbox = OrderOutboxEntity.create(
+                command.commandId(),
+                savedOrder.getId(),
+                KafkaTopicConfig.INVENTORY_RESERVE_REQUESTED,
+                payload
+        );
 
         orderOutboxJpaRepository.save(outbox);
 
-        orderRequestClaimRepository.complete(idempotencyKey, claim.claimToken(), savedOrder.getId());
+        //gán kết quả tạo đơn với idempotencyKey
+        orderRequestClaimRepository.complete(
+                idempotencyKey,claim.claimToken(),savedOrder.getId()
+        );
+
 
         return savedOrder;
     }

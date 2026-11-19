@@ -20,6 +20,52 @@ public class KafkaTopicConfig {
                 .replicas(1)
                 .build();
     }
+
+    public static final String INVENTORY_RESERVE_REQUESTED =
+            "inventory.reserve.requested";
+
+    @Bean
+    public NewTopic inventoryReserveRequestedTopic() {
+        return TopicBuilder
+                .name(INVENTORY_RESERVE_REQUESTED)
+                .partitions(3)
+                .replicas(1)
+                .build();
+    }
+
+    public static final String INVENTORY_RESERVE_RESULT =
+            "inventory.reserve.result";
+
+    @Bean
+    public NewTopic inventoryReserveResultTopic() {
+        return TopicBuilder
+                .name(INVENTORY_RESERVE_RESULT)
+                .partitions(3)
+                .replicas(1)
+                .build();
+    }
+
+    @Bean
+    public NewTopic inventoryReserveResultDltTopic() {
+        return TopicBuilder
+                .name(INVENTORY_RESERVE_RESULT + ".DLT")
+                .partitions(3)
+                .replicas(1)
+                .build();
+    }
+
+    public static final String INVENTORY_RELEASE_COMMAND =
+            "inventory.release.command";
+
+    @Bean
+    public NewTopic inventoryReleaseCommandTopic() {
+        return TopicBuilder
+                .name(INVENTORY_RELEASE_COMMAND)
+                .partitions(3)
+                .replicas(1)
+                .build();
+    }
+
     @Bean
     public NewTopic stockReleasedDlt() {
         return TopicBuilder
