@@ -17,6 +17,9 @@ public class InventorySagaTopicConfig {
     public static final String RELEASE_COMMAND =
             "inventory.release.command";
 
+    public static final String RELEASE_RESULT =
+            "inventory.release.result";
+
     @Bean
     public NewTopic inventoryReserveResultTopic() {
         return TopicBuilder
@@ -48,6 +51,24 @@ public class InventorySagaTopicConfig {
     public NewTopic inventoryReleaseCommandDltTopic() {
         return TopicBuilder
                 .name(RELEASE_COMMAND + ".DLT")
+                .partitions(3)
+                .replicas(1)
+                .build();
+    }
+
+    @Bean
+    public NewTopic inventoryReleaseResultTopic() {
+        return TopicBuilder
+                .name(RELEASE_RESULT)
+                .partitions(3)
+                .replicas(1)
+                .build();
+    }
+
+    @Bean
+    public NewTopic inventoryReleaseResultDltTopic() {
+        return TopicBuilder
+                .name(RELEASE_RESULT + ".DLT")
                 .partitions(3)
                 .replicas(1)
                 .build();

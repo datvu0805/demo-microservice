@@ -2,7 +2,8 @@ package dat.com.orderservice.application.saga;
 
 import dat.com.orderservice.application.event.ReserveStockOutcome;
 import dat.com.orderservice.application.event.ReserveStockResult;
-import dat.com.orderservice.application.event.StockReleasedEvent;
+import dat.com.orderservice.application.event.ReleaseStockOutcome;
+import dat.com.orderservice.application.event.ReleaseStockResult;
 import dat.com.orderservice.config.KafkaTopicConfig;
 import dat.com.orderservice.domain.model.Order;
 import dat.com.orderservice.domain.model.OrderStatus;
@@ -156,51 +157,50 @@ public class OrderSagaOrchestrator {
     }
 
     @Transactional
-    public void onStockReleased(StockReleasedEvent event) {
-        Objects.requireNonNull(event, "event không được null");
-        if (event.eventId() == null
-                || event.orderId() == null
-                || event.productId() == null
-                || event.productId() <= 0
-                || event.quantity() <= 0) {
-            throw new IllegalArgumentException(
-                    "StockReleasedEvent không hợp lệ"
-            );
-        }
+    public void onReleaseResult(ReleaseStockResult result) {
+        Objects.requireNonNull(result, "result không được null");
+        result.validate();
 
-        // Dedupe theo kết quả đã gắn trực tiếp với saga. Dùng marker riêng
-        // để không tranh quyền claim inbox với consumer choreography.
-        if (sagaRepository.findByReleaseEventId(event.eventId()).isPresent()) {
-            log.info("Skip duplicate orchestrated release: eventId={}", event.eventId());
+        int inserted = inboxRepository.claimEvent(
+                result.eventId().toString(),
+                result.orderId().toString(),
+                KafkaTopicConfig.INVENTORY_RELEASE_RESULT
+        );
+        if (inserted == 0) {
+            log.info("Skip duplicate release result: eventId={}", result.eventId());
             return;
         }
 
-        var waitingSagas = sagaRepository.findAllByOrderId(event.orderId())
-                .stream()
-                .filter(saga -> saga.getState() == OrderSagaState.WAITING_RELEASE)
-                .toList();
-
-        if (waitingSagas.isEmpty()) {
-            // stock.released cũng được choreography phát cho các order cũ.
-            return;
-        }
-        if (waitingSagas.size() != 1) {
-            throw new IllegalStateException(
-                    "Có nhiều Saga cùng chờ release cho Order: " + event.orderId()
-            );
-        }
-
-        OrderSagaEntity saga = waitingSagas.getFirst();
-        Order order = orderRepository.findById(event.orderId())
+        OrderSagaEntity saga = sagaRepository.findById(result.sagaId())
                 .orElseThrow(() -> new IllegalStateException(
-                        "Không tìm thấy Order: " + event.orderId()
+                        "Không tìm thấy Saga: " + result.sagaId()
                 ));
+        verifyReleaseCorrelation(saga, result);
 
-        if (!saga.getOrderId().equals(event.orderId())
-                || !Objects.equals(order.getProductId(), event.productId())
-                || !Objects.equals(order.getQuantity(), event.quantity())) {
+        if (saga.getState() == OrderSagaState.COMPENSATED
+                && result.eventId().equals(saga.getReleaseEventId())) {
+            return;
+        }
+        if (saga.getState() != OrderSagaState.WAITING_RELEASE) {
+            throw new IllegalStateException(
+                    "Không thể xử lý release result ở Saga state: "
+                            + saga.getState()
+            );
+        }
+        if (result.outcome() != ReleaseStockOutcome.RELEASED) {
+            throw new IllegalStateException(
+                    "Release command trả outcome không hỗ trợ: " + result.outcome()
+            );
+        }
+
+        Order order = orderRepository.findById(result.orderId())
+                .orElseThrow(() -> new IllegalStateException(
+                        "Không tìm thấy Order: " + result.orderId()
+                ));
+        if (!Objects.equals(order.getProductId(), result.productId())
+                || !Objects.equals(order.getQuantity(), result.quantity())) {
             throw new IllegalArgumentException(
-                    "Kết quả release không khớp Saga/Order"
+                    "Kết quả release không khớp nội dung Order"
             );
         }
 
@@ -214,15 +214,32 @@ public class OrderSagaOrchestrator {
             );
         }
 
-        saga.completeRelease(event.eventId());
+        saga.completeRelease(result.eventId());
         sagaRepository.saveAndFlush(saga);
-
         log.info(
-                "Completed release compensation: sagaId={}, orderId={}, eventId={}",
-                saga.getId(),
-                order.getId(),
-                event.eventId()
+                "Completed release compensation: sagaId={}, orderId={}, commandId={}, eventId={}",
+                saga.getId(), order.getId(), result.commandId(), result.eventId()
         );
+    }
+
+    private void verifyReleaseCorrelation(
+            OrderSagaEntity saga,
+            ReleaseStockResult result
+    ) {
+        if (!saga.getOrderId().equals(result.orderId())) {
+            throw new IllegalArgumentException("orderId không khớp Saga");
+        }
+        if (!Objects.equals(saga.getCurrentCommandId(), result.commandId())) {
+            throw new IllegalArgumentException(
+                    "commandId không khớp lệnh release của Saga"
+            );
+        }
+        if (saga.getType() != OrderSagaType.CREATE_ORDER
+                && saga.getType() != OrderSagaType.CANCEL_ORDER) {
+            throw new IllegalArgumentException(
+                    "Release result không thuộc loại Saga hỗ trợ"
+            );
+        }
     }
 
     private void verifyCorrelation(

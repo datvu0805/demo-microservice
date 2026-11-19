@@ -1,8 +1,7 @@
 package dat.com.inventory2service.kafka;
 
 import dat.com.inventory2service.dto.OrchestratedReleaseStockCommand;
-import dat.com.inventory2service.dto.ReleaseStockCommand;
-import dat.com.inventory2service.service.ReleaseStockService;
+import dat.com.inventory2service.service.ProcessOrchestratedReleaseStockCommandService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -16,7 +15,7 @@ import tools.jackson.databind.ObjectMapper;
 public class OrchestratedReleaseStockCommandConsumer {
 
     private final ObjectMapper objectMapper;
-    private final ReleaseStockService releaseStockService;
+    private final ProcessOrchestratedReleaseStockCommandService service;
 
     @KafkaListener(
             topics = "inventory.release.command",
@@ -36,20 +35,11 @@ public class OrchestratedReleaseStockCommandConsumer {
         );
         command.validate();
 
-        // Dùng commandId làm eventId ở API release hiện hữu. ReleaseStockService
-        // đã xử lý idempotent theo reservation và tạo outbox stock.released.
-        releaseStockService.release(new ReleaseStockCommand(
-                command.commandId(),
-                command.orderId(),
-                command.productId(),
-                command.quantity()
-        ));
+        var result = service.execute(command);
 
         log.info(
-                "Orchestrated release command committed: commandId={}, sagaId={}, orderId={}",
-                command.commandId(),
-                command.sagaId(),
-                command.orderId()
+                "Orchestrated release command committed: commandId={}, sagaId={}, orderId={}, eventId={}",
+                result.commandId(), result.sagaId(), result.orderId(), result.eventId()
         );
     }
 }

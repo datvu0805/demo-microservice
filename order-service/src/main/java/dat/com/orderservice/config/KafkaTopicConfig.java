@@ -57,6 +57,27 @@ public class KafkaTopicConfig {
     public static final String INVENTORY_RELEASE_COMMAND =
             "inventory.release.command";
 
+    public static final String INVENTORY_RELEASE_RESULT =
+            "inventory.release.result";
+
+    @Bean
+    public NewTopic inventoryReleaseResultTopic() {
+        return TopicBuilder
+                .name(INVENTORY_RELEASE_RESULT)
+                .partitions(3)
+                .replicas(1)
+                .build();
+    }
+
+    @Bean
+    public NewTopic inventoryReleaseResultDltTopic() {
+        return TopicBuilder
+                .name(INVENTORY_RELEASE_RESULT + ".DLT")
+                .partitions(3)
+                .replicas(1)
+                .build();
+    }
+
     @Bean
     public NewTopic inventoryReleaseCommandTopic() {
         return TopicBuilder

@@ -184,6 +184,19 @@ public class OrderSagaEntity {
         finish(OrderSagaState.COMPENSATED);
     }
 
+    public void deferRecovery(Duration retryDelay) {
+        requirePositiveTimeout(retryDelay);
+        if (state != OrderSagaState.WAITING_STOCK
+                && state != OrderSagaState.WAITING_RELEASE) {
+            throw new IllegalStateException(
+                    "Chỉ Saga đang chờ mới được lên lịch recovery"
+            );
+        }
+        Instant now = Instant.now();
+        this.deadlineAt = now.plus(retryDelay);
+        this.updatedAt = now;
+    }
+
     private void requireWaitingStock() {
         if (type != OrderSagaType.CREATE_ORDER) {
             throw new IllegalStateException(

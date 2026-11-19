@@ -6,7 +6,7 @@ import dat.com.orderservice.config.KafkaTopicConfig;
 import dat.com.orderservice.domain.model.Order;
 import dat.com.orderservice.domain.model.OrderStatus;
 import dat.com.orderservice.domain.repository.OrderRepository;
-import dat.com.orderservice.dto.ReleaseStockCommand;
+import dat.com.orderservice.application.command.ReleaseStockCommand;
 import dat.com.orderservice.infrastructure.persistence.entity.OrderOutboxEntity;
 import dat.com.orderservice.infrastructure.persistence.entity.OrderSagaEntity;
 import dat.com.orderservice.infrastructure.persistence.repository.OrderOutboxJpaRepository;

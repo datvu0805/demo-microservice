@@ -65,3 +65,5 @@ order:
     scan-delay-ms: 10000
     stock-timeout: PT2M
     release-timeout: PT2M
+    recovery-scan-delay-ms: 10000
+    recovery-retry-delay: PT30S

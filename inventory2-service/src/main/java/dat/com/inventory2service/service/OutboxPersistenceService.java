@@ -2,6 +2,7 @@ package dat.com.inventory2service.service;
 
 import dat.com.inventory2service.config.InventorySagaTopicConfig;
 import dat.com.inventory2service.dto.ReserveStockResult;
+import dat.com.inventory2service.dto.ReleaseStockResult;
 import dat.com.inventory2service.entity.Inventory;
 import dat.com.inventory2service.entity.InventoryOutboxEntity;
 import dat.com.inventory2service.repository.InventoryOutboxJpaRepository;
@@ -72,5 +73,28 @@ public class OutboxPersistenceService {
         );
 
         inventoryOutboxJpaRepository.save(outbox);
+    }
+
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void saveReleaseResult(ReleaseStockResult result) {
+        if (result == null
+                || result.eventId() == null
+                || result.sagaId() == null
+                || result.commandId() == null
+                || result.orderId() == null
+                || result.productId() == null
+                || result.productId() <= 0
+                || result.quantity() <= 0
+                || result.outcome() == null) {
+            throw new IllegalArgumentException("ReleaseStockResult không hợp lệ");
+        }
+
+        String payload = objectMapper.writeValueAsString(result);
+        inventoryOutboxJpaRepository.save(InventoryOutboxEntity.create(
+                result.eventId(),
+                result.orderId(),
+                InventorySagaTopicConfig.RELEASE_RESULT,
+                payload
+        ));
     }
 }
